@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Finansowy Oddziału Bankowego</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: linear-gradient(135deg, #1a3a5c, #2d6da8); color: white; padding: 20px 30px; }
+    .header h1 { font-size: 1.5em; font-weight: 600; }
+    .header p { opacity: 0.85; font-size: 0.9em; margin-top: 4px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 1.1em; color: #1a3a5c; margin-bottom: 15px; border-bottom: 2px solid #e8ecf1; padding-bottom: 8px; }
+    .card h3 { font-size: 0.95em; color: #2d6da8; margin: 14px 0 8px 0; }
+
+    /* Scenario bar */
+    .scenario-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .scenario-bar input[type="text"] { flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
+    .scenario-bar select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; min-width: 180px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; font-weight: 500; transition: background 0.2s; }
+    .btn-primary { background: #2d6da8; color: white; }
+    .btn-primary:hover { background: #1a5a8a; }
+    .btn-success { background: #27a844; color: white; }
+    .btn-success:hover { background: #1e8e38; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #b82d3a; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-calculate { background: linear-gradient(135deg, #27a844, #1e8e38); color: white; font-size: 1em; padding: 12px 24px; width: 100%; margin-top: 10px; }
+    .btn-calculate:hover { background: linear-gradient(135deg, #1e8e38, #166e2c); }
+
+    /* Form fields */
+    .field { margin-bottom: 10px; }
+    .field label { display: block; font-size: 0.82em; color: #555; margin-bottom: 3px; }
+    .field input { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; background: #fffde7; }
+    .field input:focus { outline: none; border-color: #2d6da8; box-shadow: 0 0 0 2px rgba(45,109,168,0.15); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Collapsible sections */
+    .collapsible { cursor: pointer; user-select: none; }
+    .collapsible::before { content: '\25BC'; font-size: 0.7em; margin-right: 6px; display: inline-block; transition: transform 0.2s; }
+    .collapsible.collapsed::before { transform: rotate(-90deg); }
+    .collapse-content { overflow: hidden; transition: max-height 0.3s ease; }
+    .collapse-content.hidden { max-height: 0 !important; }
+
+    /* Results table */
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+    .results-table th, .results-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #eee; }
+    .results-table th { background: #f8f9fa; color: #1a3a5c; font-weight: 600; text-align: right; }
+    .results-table th:first-child, .results-table td:first-child { text-align: left; }
+    .results-table tr:hover { background: #f8f9fa; }
+    .results-table .total-row { font-weight: 700; background: #e8f4e8 !important; border-top: 2px solid #1a3a5c; }
+    .results-table .negative { color: #dc3545; }
+    .results-table .positive { color: #27a844; }
+
+    /* KPI cards */
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .kpi { background: #f8f9fa; border-radius: 8px; padding: 16px; text-align: center; border-left: 4px solid #2d6da8; }
+    .kpi .label { font-size: 0.82em; color: #666; margin-bottom: 4px; }
+    .kpi .value { font-size: 1.6em; font-weight: 700; color: #1a3a5c; }
+    .kpi.green { border-left-color: #27a844; }
+    .kpi.green .value { color: #27a844; }
+
+    /* Chart */
+    .chart-container { position: relative; height: 350px; }
+
+    /* Toast notification */
+    .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; background: #333; color: white; border-radius: 6px; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; z-index: 1000; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .toast.success { background: #27a844; }
+    .toast.error { background: #dc3545; }
+
+    /* Scrollable table wrapper */
+    .table-wrapper { overflow-x: auto; }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* Amortization/Penetration tables */
+    .array-table { max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; }
+    .array-table table { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+    .array-table th, .array-table td { padding: 4px 8px; border-bottom: 1px solid #f0f0f0; }
+    .array-table th { background: #f8f9fa; position: sticky; top: 0; }
+    .array-table input { width: 80px; padding: 3px 6px; border: 1px solid #ddd; border-radius: 3px; background: #fffde7; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Model Finansowy Oddziału Bankowego</h1>
+  <p>Projekcja 72-miesięczna z analizą break-even i payback</p>
+</div>
+
+<div class="container">
+  <!-- Scenario management -->
+  <div class="card">
+    <div class="scenario-bar">
+      <input type="text" id="scenarioName" placeholder="Nazwa scenariusza...">
+      <button class="btn btn-success" onclick="saveScenario()">Zapisz</button>
+      <select id="scenarioSelect" onchange="loadScenario()">
+        <option value="">-- Wczytaj scenariusz --</option>
+      </select>
+      <button class="btn btn-danger" onclick="deleteScenario()">Usuń</button>
+      <button class="btn btn-secondary" onclick="resetToDefaults()">Domyślne</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: Input parameters -->
+    <div>
+      <div class="card">
+        <h2>Parametry wejściowe</h2>
+
+        <h3>Depozyty</h3>
+        <div class="field">
+          <label>Liczba nowych klientów depozytowych / miesiąc</label>
+          <input type="number" id="newDepositClientsPerMonth" step="1">
+        </div>
+        <div class="field">
+          <label>Średni depozyt per klient (PLN)</label>
+          <input type="number" id="avgDepositPerClient" step="100">
+        </div>
+        <div class="field">
+          <label>Marża na depozytach p.a. (%)</label>
+          <input type="number" id="depositMarginPA" step="0.1">
+        </div>
+
+        <h3>Pożyczki</h3>
+        <div class="field">
+          <label>Średnia kwota pożyczki (PLN)</label>
+          <input type="number" id="avgLoanAmount" step="100">
+        </div>
+        <div class="field">
+          <label>Marża na pożyczkach p.a. (%)</label>
+          <input type="number" id="loanMarginPA" step="0.1">
+        </div>
+
+        <h3>Inwestycje</h3>
+        <div class="field">
+          <label>CAPEX (PLN)</label>
+          <input type="number" id="capex" step="10000">
+        </div>
+
+        <h3>Koszty operacyjne (miesięcznie)</h3>
+        <div class="field">
+          <label>Wynagrodzenia / miesiąc (PLN)</label>
+          <input type="number" id="salariesPerMonth" step="1000">
+        </div>
+        <div class="field">
+          <label>Czynsz / miesiąc (PLN)</label>
+          <input type="number" id="rentPerMonth" step="1000">
+        </div>
+        <div class="field">
+          <label>Pozostałe koszty / miesiąc (PLN)</label>
+          <input type="number" id="otherCostsPerMonth" step="100">
+        </div>
+
+        <h3>Inflacja</h3>
+        <div class="field">
+          <label>Inflacja roczna (%)</label>
+          <input type="number" id="annualInflation" step="0.1">
+        </div>
+
+        <h3 class="collapsible" onclick="toggleCollapse(this)">Atrycja klientów depozytowych (roczna)</h3>
+        <div class="collapse-content">
+          <div class="field-row" style="margin-bottom:5px" id="attritionFields"></div>
+        </div>
+
+        <h3 class="collapsible collapsed" onclick="toggleCollapse(this)">Amortyzacja portfela pożyczek</h3>
+        <div class="collapse-content hidden" id="amortCollapse">
+          <div class="array-table" id="amortTable"></div>
+        </div>
+
+        <h3 class="collapsible collapsed" onclick="toggleCollapse(this)">Penetracja pożyczkowa</h3>
+        <div class="collapse-content hidden" id="penCollapse">
+          <div class="array-table" id="penTable"></div>
+        </div>
+
+        <button class="btn btn-calculate" onclick="runCalculation()">Oblicz</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div id="resultsPanel">
+      <div class="card" id="resultsPlaceholder">
+        <p style="text-align:center;color:#999;padding:40px 0;">Kliknij "Oblicz" aby zobaczyć wyniki</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let defaults = {};
+let chart = null;
+
+// Format number as PLN
+function fmtPLN(val) {
+  if (typeof val !== 'number') return val;
+  const neg = val < 0;
+  const abs = Math.abs(Math.round(val));
+  const str = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return neg ? `(${str})` : str;
+}
+
+function fmtPct(val) {
+  return (val * 100).toFixed(1) + '%';
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function toggleCollapse(el) {
+  el.classList.toggle('collapsed');
+  el.nextElementSibling.classList.toggle('hidden');
+}
+
+// Initialize
+async function init() {
+  const res = await fetch('/api/defaults');
+  defaults = await res.json();
+  populateForm(defaults);
+  loadScenarioList();
+  runCalculation();
+}
+
+function populateForm(p) {
+  document.getElementById('newDepositClientsPerMonth').value = p.newDepositClientsPerMonth;
+  document.getElementById('avgDepositPerClient').value = p.avgDepositPerClient;
+  document.getElementById('depositMarginPA').value = (p.depositMarginPA * 100).toFixed(1);
+  document.getElementById('avgLoanAmount').value = p.avgLoanAmount;
+  document.getElementById('loanMarginPA').value = (p.loanMarginPA * 100).toFixed(1);
+  document.getElementById('capex').value = p.capex;
+  document.getElementById('salariesPerMonth').value = p.salariesPerMonth;
+  document.getElementById('rentPerMonth').value = p.rentPerMonth;
+  document.getElementById('otherCostsPerMonth').value = p.otherCostsPerMonth;
+  document.getElementById('annualInflation').value = (p.annualInflation * 100).toFixed(1);
+
+  // Attrition fields
+  const af = document.getElementById('attritionFields');
+  af.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    af.innerHTML += `<div class="field"><label>Rok ${i+1} (%)</label><input type="number" step="0.1" class="attrition" data-idx="${i}" value="${(p.attritionRates[i]*100).toFixed(1)}"></div>`;
+  }
+
+  // Amortization table
+  const at = document.getElementById('amortTable');
+  let html = '<table><thead><tr><th>MoB</th><th>Saldo %</th></tr></thead><tbody>';
+  for (let i = 0; i < p.amortization.length; i++) {
+    html += `<tr><td>${i}</td><td><input type="number" step="0.01" class="amort" data-idx="${i}" value="${(p.amortization[i]*100).toFixed(2)}"></td></tr>`;
+  }
+  html += '</tbody></table>';
+  at.innerHTML = html;
+
+  // Penetration table
+  const pt = document.getElementById('penTable');
+  html = '<table><thead><tr><th>Miesiąc</th><th>Penetracja %</th></tr></thead><tbody>';
+  for (let i = 0; i < p.penetration.length; i++) {
+    html += `<tr><td>${i}</td><td><input type="number" step="0.01" class="pen" data-idx="${i}" value="${(p.penetration[i]*100).toFixed(2)}"></td></tr>`;
+  }
+  html += '</tbody></table>';
+  pt.innerHTML = html;
+}
+
+function collectParams() {
+  const params = {
+    newDepositClientsPerMonth: Number(document.getElementById('newDepositClientsPerMonth').value),
+    avgDepositPerClient: Number(document.getElementById('avgDepositPerClient').value),
+    depositMarginPA: Number(document.getElementById('depositMarginPA').value) / 100,
+    avgLoanAmount: Number(document.getElementById('avgLoanAmount').value),
+    loanMarginPA: Number(document.getElementById('loanMarginPA').value) / 100,
+    capex: Number(document.getElementById('capex').value),
+    salariesPerMonth: Number(document.getElementById('salariesPerMonth').value),
+    rentPerMonth: Number(document.getElementById('rentPerMonth').value),
+    otherCostsPerMonth: Number(document.getElementById('otherCostsPerMonth').value),
+    annualInflation: Number(document.getElementById('annualInflation').value) / 100,
+    attritionRates: [...document.querySelectorAll('.attrition')].map(el => Number(el.value) / 100),
+    amortization: [...document.querySelectorAll('.amort')].map(el => Number(el.value) / 100),
+    penetration: [...document.querySelectorAll('.pen')].map(el => Number(el.value) / 100),
+  };
+  return params;
+}
+
+async function runCalculation() {
+  const params = collectParams();
+  try {
+    const res = await fetch('/api/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    renderResults(data);
+  } catch (err) {
+    showToast('Błąd obliczeń: ' + err.message, 'error');
+  }
+}
+
+function renderResults(data) {
+  const panel = document.getElementById('resultsPanel');
+  panel.innerHTML = '';
+
+  // KPI cards
+  const kpiHtml = `
+    <div class="card">
+      <div class="kpi-row">
+        <div class="kpi green">
+          <div class="label">Break-even (miesiąc)</div>
+          <div class="value">${data.breakEvenMonth}</div>
+        </div>
+        <div class="kpi green">
+          <div class="label">Payback (miesiąc)</div>
+          <div class="value">${data.paybackMonth}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  panel.innerHTML += kpiHtml;
+
+  // Annual summary table
+  const s = data.annualSummary;
+  const t = data.totals;
+  let tableHtml = `
+    <div class="card">
+      <h2>Podsumowanie Roczne</h2>
+      <div class="table-wrapper">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Kategoria</th>
+              ${s.map(y => `<th>Rok ${y.year}</th>`).join('')}
+              <th>Razem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Przychód z depozytów</td>${s.map(y => `<td>${fmtPLN(y.depositRevenue)}</td>`).join('')}<td><b>${fmtPLN(t.depositRevenue)}</b></td></tr>
+            <tr><td>Przychód z pożyczek</td>${s.map(y => `<td>${fmtPLN(y.loanRevenue)}</td>`).join('')}<td><b>${fmtPLN(t.loanRevenue)}</b></td></tr>
+            <tr style="font-weight:600;background:#f0f7ff"><td>Przychody razem</td>${s.map(y => `<td>${fmtPLN(y.totalRevenue)}</td>`).join('')}<td><b>${fmtPLN(t.totalRevenue)}</b></td></tr>
+            <tr><td>Wynagrodzenia</td>${s.map(y => `<td>${fmtPLN(y.salaries)}</td>`).join('')}<td><b>${fmtPLN(t.salaries)}</b></td></tr>
+            <tr><td>Czynsz</td>${s.map(y => `<td>${fmtPLN(y.rent)}</td>`).join('')}<td><b>${fmtPLN(t.rent)}</b></td></tr>
+            <tr><td>Pozostałe koszty</td>${s.map(y => `<td>${fmtPLN(y.otherCosts)}</td>`).join('')}<td><b>${fmtPLN(t.otherCosts)}</b></td></tr>
+            <tr style="font-weight:600"><td>Koszty operacyjne razem</td>${s.map(y => `<td>${fmtPLN(y.totalOpCosts)}</td>`).join('')}<td><b>${fmtPLN(t.totalOpCosts)}</b></td></tr>
+            <tr><td>CAPEX</td>${s.map(y => `<td>${fmtPLN(y.capex)}</td>`).join('')}<td><b>${fmtPLN(t.capex)}</b></td></tr>
+            <tr style="font-weight:600"><td>Wydatki razem</td>${s.map(y => `<td>${fmtPLN(y.totalExpenses)}</td>`).join('')}<td><b>${fmtPLN(t.totalExpenses)}</b></td></tr>
+            <tr class="total-row"><td>Wynik roczny</td>${s.map(y => `<td class="${y.yearResult >= 0 ? 'positive' : 'negative'}">${fmtPLN(y.yearResult)}</td>`).join('')}<td class="${t.yearResult >= 0 ? 'positive' : 'negative'}"><b>${fmtPLN(t.yearResult)}</b></td></tr>
+            <tr class="total-row"><td>Wynik narastająco</td>${s.map(y => `<td class="${y.cumulativeResult >= 0 ? 'positive' : 'negative'}">${fmtPLN(y.cumulativeResult)}</td>`).join('')}<td class="${t.cumulativeResult >= 0 ? 'positive' : 'negative'}"><b>${fmtPLN(t.cumulativeResult)}</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  panel.innerHTML += tableHtml;
+
+  // Chart
+  panel.innerHTML += `
+    <div class="card">
+      <h2>Wynik narastająco - analiza Break-even i Payback</h2>
+      <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+  `;
+
+  // Render chart
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  const cd = data.chartData;
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: cd.map(d => d.month),
+      datasets: [
+        {
+          label: 'Wynik narastająco (PLN)',
+          data: cd.map(d => d.cumulativeResult),
+          borderColor: '#2d6da8',
+          backgroundColor: 'rgba(45,109,168,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+        {
+          label: 'Przychody narastająco (PLN)',
+          data: cd.map(d => d.cumulativeRevenue),
+          borderColor: '#27a844',
+          borderDash: [5, 5],
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 1.5,
+          fill: false,
+        },
+        {
+          label: 'Wydatki narastająco (PLN)',
+          data: cd.map(d => d.cumulativeExpenses),
+          borderColor: '#dc3545',
+          borderDash: [5, 5],
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 1.5,
+          fill: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + fmtPLN(ctx.parsed.y) + ' PLN';
+            }
+          }
+        },
+        annotation: undefined,
+      },
+      scales: {
+        x: { title: { display: true, text: 'Miesiąc' } },
+        y: {
+          title: { display: true, text: 'PLN' },
+          ticks: {
+            callback: function(v) { return fmtPLN(v); }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Scenario management
+async function loadScenarioList() {
+  const res = await fetch('/api/scenarios');
+  const list = await res.json();
+  const sel = document.getElementById('scenarioSelect');
+  sel.innerHTML = '<option value="">-- Wczytaj scenariusz --</option>';
+  list.forEach(s => {
+    sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+  });
+}
+
+async function saveScenario() {
+  const name = document.getElementById('scenarioName').value.trim();
+  if (!name) { showToast('Podaj nazwę scenariusza', 'error'); return; }
+  const params = collectParams();
+  const res = await fetch('/api/scenarios', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, params })
+  });
+  const data = await res.json();
+  showToast(data.message, 'success');
+  loadScenarioList();
+}
+
+async function loadScenario() {
+  const id = document.getElementById('scenarioSelect').value;
+  if (!id) return;
+  const res = await fetch('/api/scenarios/' + id);
+  const data = await res.json();
+  document.getElementById('scenarioName').value = data.name;
+  populateForm(data.params);
+  runCalculation();
+  showToast('Wczytano:' + data.name, 'success');
+}
+
+async function deleteScenario() {
+  const id = document.getElementById('scenarioSelect').value;
+  if (!id) { showToast('Wybierz scenariusz do usunięcia', 'error'); return; }
+  if (!confirm('Czy na pewno chcesz usunąć ten scenariusz?')) return;
+  await fetch('/api/scenarios/' + id, { method: 'DELETE' });
+  document.getElementById('scenarioSelect').value = '';
+  document.getElementById('scenarioName').value = '';
+  showToast('Scenariusz usunięty', 'success');
+  loadScenarioList();
+}
+
+function resetToDefaults() {
+  populateForm(defaults);
+  document.getElementById('scenarioName').value = '';
+  document.getElementById('scenarioSelect').value = '';
+  runCalculation();
+  showToast('Przywrócono wartości domyślne', 'success');
+}
+
+init();
+</script>
+</body>
+</html>

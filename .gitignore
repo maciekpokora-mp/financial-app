@@ -1,0 +1,5 @@
+node_modules/
+scenarios.db
+scenarios.db-shm
+scenarios.db-wal
+.claude/
