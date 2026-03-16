@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dokumentacja — Model Finansowy Oddziału Bankowego</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, #1a3a5c, #2d6da8); color: white; padding: 30px 40px; }
+    .header h1 { font-size: 1.8em; font-weight: 600; }
+    .header p { opacity: 0.85; font-size: 1em; margin-top: 6px; }
+    .header .back-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9em; display: inline-block; margin-top: 10px; }
+    .header .back-link:hover { color: white; }
+
+    /* Navigation */
+    .doc-nav { background: white; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .doc-nav .container { display: flex; gap: 0; }
+    .doc-nav a { padding: 14px 24px; text-decoration: none; color: #555; font-weight: 500; font-size: 0.95em; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .doc-nav a:hover { color: #1a3a5c; background: #f8f9fa; }
+    .doc-nav a.active { color: #1a3a5c; border-bottom-color: #2d6da8; }
+
+    /* Container */
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    .content { padding: 30px 0 60px; }
+
+    /* Section */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Typography */
+    h2 { font-size: 1.5em; color: #1a3a5c; margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #e8ecf1; }
+    h2:first-child { margin-top: 0; }
+    h3 { font-size: 1.15em; color: #2d6da8; margin: 24px 0 10px; }
+    h4 { font-size: 1em; color: #444; margin: 18px 0 8px; }
+    p { margin-bottom: 12px; }
+    ul, ol { margin: 0 0 12px 24px; }
+    li { margin-bottom: 6px; }
+
+    /* Cards */
+    .doc-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 20px; }
+
+    /* Tables */
+    .doc-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.9em; }
+    .doc-table th, .doc-table td { padding: 10px 14px; border: 1px solid #e0e0e0; text-align: left; }
+    .doc-table th { background: #f0f4f8; color: #1a3a5c; font-weight: 600; }
+    .doc-table tr:nth-child(even) { background: #fafbfc; }
+    .doc-table tr:hover { background: #f0f4f8; }
+    .doc-table code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+    .doc-table .yellow { background: #fffde7; }
+
+    /* Code blocks */
+    pre { background: #1e293b; color: #e2e8f0; padding: 16px 20px; border-radius: 6px; overflow-x: auto; margin: 12px 0 20px; font-size: 0.88em; line-height: 1.5; }
+    code { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; }
+    p code, li code, td code { background: #f0f0f0; color: #d63384; padding: 2px 6px; border-radius: 3px; font-size: 0.88em; }
+
+    /* Info boxes */
+    .info-box { padding: 14px 18px; border-radius: 6px; margin: 14px 0 20px; font-size: 0.92em; }
+    .info-box.blue { background: #e8f4fd; border-left: 4px solid #2d6da8; }
+    .info-box.green { background: #e8f5e9; border-left: 4px solid #27a844; }
+    .info-box.orange { background: #fff3e0; border-left: 4px solid #f57c00; }
+    .info-box.red { background: #fde8e8; border-left: 4px solid #dc3545; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+
+    /* Diagram boxes */
+    .arch-diagram { display: flex; gap: 16px; align-items: stretch; margin: 20px 0; flex-wrap: wrap; }
+    .arch-box { flex: 1; min-width: 160px; background: white; border: 2px solid #2d6da8; border-radius: 8px; padding: 16px; text-align: center; }
+    .arch-box .title { font-weight: 700; color: #1a3a5c; margin-bottom: 6px; font-size: 0.95em; }
+    .arch-box .desc { font-size: 0.82em; color: #666; }
+    .arch-arrow { display: flex; align-items: center; font-size: 1.5em; color: #2d6da8; font-weight: bold; }
+
+    /* Formula */
+    .formula { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px 18px; margin: 10px 0 16px; font-family: 'Cambria Math', 'Times New Roman', serif; font-size: 1.05em; color: #1a3a5c; text-align: center; }
+
+    /* Flow steps */
+    .flow-steps { display: flex; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; }
+    .flow-step { flex: 1; min-width: 120px; background: #f0f4f8; border-radius: 8px; padding: 14px; text-align: center; position: relative; }
+    .flow-step .num { display: inline-block; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; background: #2d6da8; color: white; font-weight: 700; font-size: 0.85em; margin-bottom: 6px; }
+    .flow-step .label { font-size: 0.85em; color: #333; }
+
+    /* Print styles */
+    @media print {
+      .doc-nav { position: static; }
+      .section { display: block !important; page-break-before: always; }
+      .header .back-link { display: none; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 1.3em; }
+      .doc-nav a { padding: 12px 14px; font-size: 0.85em; }
+      .arch-diagram { flex-direction: column; }
+      .arch-arrow { transform: rotate(90deg); justify-content: center; }
+      .flow-steps { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Dokumentacja Aplikacji</h1>
+  <p>Model Finansowy Oddzialu Bankowego — Projekcja 72-miesieczna</p>
+  <a href="/" class="back-link">&larr; Powrot do aplikacji</a>
+</div>
+
+<div class="doc-nav">
+  <div class="container">
+    <a href="#" class="active" onclick="showSection('business', this); return false;">Dokumentacja biznesowa</a>
+    <a href="#" onclick="showSection('technical', this); return false;">Dokumentacja techniczna</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="content">
+
+    <!-- ================================================================== -->
+    <!-- SEKCJA BIZNESOWA -->
+    <!-- ================================================================== -->
+    <div id="business" class="section active">
+
+      <h2>1. Przeznaczenie aplikacji</h2>
+      <div class="doc-card">
+        <p>Aplikacja <strong>Model Finansowy Oddzialu Bankowego</strong> sluzy do symulacji finansowej nowo otwieranego oddzialu banku na przestrzeni <strong>72 miesiecy (6 lat)</strong>. Umozliwia prognozowanie przychodow, kosztow i rentownosci oddzialu w zaleznosci od wprowadzonych parametrow wejsciowych.</p>
+        <p>Glowne zastosowania:</p>
+        <ul>
+          <li>Analiza oplacalnosci otwarcia nowego oddzialu bankowego</li>
+          <li>Porownywanie roznych scenariuszy biznesowych (np. rozne lokalizacje, poziomy zatrudnienia)</li>
+          <li>Wyznaczanie momentu <strong>break-even</strong> (progu rentownosci operacyjnej) oraz <strong>payback</strong> (zwrotu z inwestycji)</li>
+          <li>Prezentacja prognoz finansowych interesariuszom i zarzadowi</li>
+        </ul>
+      </div>
+
+      <h2>2. Kluczowe wskazniki (KPI)</h2>
+      <div class="doc-card">
+        <table class="doc-table">
+          <thead>
+            <tr><th>Wskaznik</th><th>Opis</th><th>Wartosc domyslna</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Break-even</strong></td>
+              <td>Pierwszy miesiac, w ktorym wynik operacyjny oddzialu (przychody minus koszty operacyjne, bez CAPEX) jest dodatni. Oznacza moment, od ktorego oddzial zaczyna zarabiac na biezacej dzialalnosci.</td>
+              <td>Miesiac 17</td>
+            </tr>
+            <tr>
+              <td><strong>Payback</strong></td>
+              <td>Pierwszy miesiac, w ktorym skumulowany wynik (laczne przychody minus laczne wydatki wlacznie z CAPEX) jest dodatni. Oznacza moment pelnego zwrotu poczatkowej inwestycji.</td>
+              <td>Miesiac 44</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. Parametry wejsciowe</h2>
+      <div class="doc-card">
+        <p>Wszystkie parametry wejsciowe odpowiadaja komorkom oznaczonym <span style="background:#fffde7;padding:2px 8px;border:1px solid #e0d97e;border-radius:3px;">zoltym kolorem</span> w oryginalnym pliku Excel. Uzytkownik moze je dowolnie modyfikowac, aby badac rozne scenariusze.</p>
+
+        <h3>3.1. Depozyty</h3>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Parametr</th><th>Opis</th><th>Wartosc domyslna</th><th>Jednostka</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td>Nowi klienci depozytowi / miesiac</td><td>Stala liczba nowych klientow pozyskiwanych co miesiac</td><td>200</td><td>os./mies.</td></tr>
+            <tr class="yellow"><td>Sredni depozyt per klient</td><td>Srednia wartosc depozytu nowego klienta (rosnie z inflacja)</td><td>15 000</td><td>PLN</td></tr>
+            <tr class="yellow"><td>Marza na depozytach p.a.</td><td>Roczna stopa marzy na portfelu depozytowym</td><td>4,0%</td><td>% p.a.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.2. Pozyczki</h3>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Parametr</th><th>Opis</th><th>Wartosc domyslna</th><th>Jednostka</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td>Srednia kwota pozyczki</td><td>Srednia wartosc udzielanej pozyczki (rosnie z inflacja)</td><td>25 000</td><td>PLN</td></tr>
+            <tr class="yellow"><td>Marza na pozyczkach p.a.</td><td>Roczna stopa marzy na portfelu pozyczkowym</td><td>6,0%</td><td>% p.a.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.3. Inwestycje</h3>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Parametr</th><th>Opis</th><th>Wartosc domyslna</th><th>Jednostka</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td>CAPEX</td><td>Jednorazowy naklad inwestycyjny ponoszony w 1. miesiacu (wyposazenie, remont, IT itp.)</td><td>2 500 000</td><td>PLN</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.4. Koszty operacyjne</h3>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Parametr</th><th>Opis</th><th>Wartosc domyslna</th><th>Jednostka</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td>Wynagrodzenia / miesiac</td><td>Miesieczny koszt wynagrodzen (rosnie z inflacja)</td><td>100 000</td><td>PLN/mies.</td></tr>
+            <tr class="yellow"><td>Czynsz / miesiac</td><td>Miesieczny koszt najmu lokalu (rosnie z inflacja)</td><td>50 000</td><td>PLN/mies.</td></tr>
+            <tr class="yellow"><td>Pozostale koszty / miesiac</td><td>Inne koszty operacyjne (rosna z inflacja)</td><td>10 000</td><td>PLN/mies.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.5. Inflacja</h3>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Parametr</th><th>Opis</th><th>Wartosc domyslna</th><th>Jednostka</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td>Inflacja roczna</td><td>Roczna stopa inflacji — wplywa na wszystkie kwoty nominalne (depozyty, pozyczki, koszty)</td><td>2,5%</td><td>% p.a.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.6. Atrycja klientow depozytowych</h3>
+        <p>Szesc wspolczynnikow rocznych (po jednym na kazdy rok zycia kohorty klientow). Okreslaja jaki odsetek klientow z danej kohorty odchodzi w kolejnych latach.</p>
+        <table class="doc-table">
+          <thead>
+            <tr><th>Rok</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+          </thead>
+          <tbody>
+            <tr class="yellow"><td><strong>Domyslna atrycja</strong></td><td>8%</td><td>8%</td><td>8%</td><td>8%</td><td>8%</td><td>8%</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.7. Amortyzacja portfela pozyczek</h3>
+        <p>Krzywa splaty pozyczek — 145 wartosci (MoB 0 do 144) okreslajacych jaki procent poczatkowego salda pozyczki pozostaje do splaty w danym miesiacu od uruchomienia (MoB = Month on Book). Domyslnie: zaczyna od 100%, spada do 25% w MoB 24, potem maleje o 2% miesiecznie, az do 0% w MoB 144.</p>
+
+        <h3>3.8. Penetracja pozyczkowa</h3>
+        <p>61 wartosci (miesiace 0-60) okreslajacych jaki odsetek klientow depozytowych z danej kohorty bierze pozyczke w danym miesiacu od dolaczenia. Domyslnie: stala wartosc 0,25% w kazdym miesiacu.</p>
+      </div>
+
+      <h2>4. Logika modelu biznesowego</h2>
+      <div class="doc-card">
+        <h3>4.1. Przeplyw obliczen</h3>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="num">1</div><div class="label">Kohorty klientow depozytowych</div></div>
+          <div class="flow-step"><div class="num">2</div><div class="label">Nowe pozyczki (penetracja)</div></div>
+          <div class="flow-step"><div class="num">3</div><div class="label">Portfel pozyczek (amortyzacja)</div></div>
+          <div class="flow-step"><div class="num">4</div><div class="label">Projekcja miesiezna (P&amp;L)</div></div>
+          <div class="flow-step"><div class="num">5</div><div class="label">Podsumowanie roczne</div></div>
+        </div>
+
+        <h3>4.2. Model kohortowy klientow</h3>
+        <p>Kazdy miesiac dochodzi nowa <strong>kohorta</strong> klientow depozytowych (domyslnie 200 osob). Liczba aktywnych klientow w kohorcie maleje w czasie zgodnie ze wspolczynnikami atrycji. Laczona liczba klientow aktywnych we wszystkich kohortach daje laczna baze depozytowa oddzialu w danym miesiacu.</p>
+
+        <h3>4.3. Przychody z depozytow</h3>
+        <div class="formula">
+          Przychod z depozytow (miesiac m) = Laczna baza klientow &times; Sredni depozyt &times; Indeks inflacji &times; Marza depozytowa / 12
+        </div>
+
+        <h3>4.4. Przychody z pozyczek</h3>
+        <p>Klienci depozytowi z kazdej kohorty moga brac pozyczki zgodnie z krzywa penetracji. Liczba nowych pozyczek w kazdym miesiacu wynika z mnoienia bazy klientow przez wspolczynnik penetracji. Portfel pozyczkowy jest sumowany z uwzglednieniem krzywej amortyzacji (splat).</p>
+        <div class="formula">
+          Przychod z pozyczek (miesiac m) = Saldo portfela pozyczkowego &times; Marza pozyczkowa / 12
+        </div>
+
+        <h3>4.5. Koszty</h3>
+        <ul>
+          <li><strong>CAPEX</strong> — jednorazowy koszt w 1. miesiacu</li>
+          <li><strong>Koszty operacyjne</strong> — wynagrodzenia + czynsz + inne, rosna co miesiac z inflacja</li>
+        </ul>
+
+        <h3>4.6. Wynik i wskazniki</h3>
+        <ul>
+          <li><strong>Wynik operacyjny</strong> = Przychody razem &minus; Koszty operacyjne (bez CAPEX)</li>
+          <li><strong>Wynik calkowity</strong> = Przychody razem &minus; Wydatki razem (z CAPEX)</li>
+          <li><strong>Break-even</strong>: pierwszy miesiac z dodatnim wynikiem operacyjnym</li>
+          <li><strong>Payback</strong>: pierwszy miesiac z dodatnim wynikiem narastajacym</li>
+        </ul>
+      </div>
+
+      <h2>5. Wyniki — co pokazuje aplikacja</h2>
+      <div class="doc-card">
+        <h3>5.1. Karty KPI</h3>
+        <p>Na gorze panelu wynikow widoczne sa dwa kluczowe wskazniki: <strong>Break-even</strong> (numer miesiaca) i <strong>Payback</strong> (numer miesiaca).</p>
+
+        <h3>5.2. Tabela podsumowania rocznego</h3>
+        <p>Tabela prezentuje dane w ukladzie rocznym (Rok 1-6) oraz kolumne "Razem":</p>
+        <table class="doc-table">
+          <thead><tr><th>Wiersz</th><th>Opis</th></tr></thead>
+          <tbody>
+            <tr><td>Przychod z depozytow</td><td>Roczna suma przychodow z marzy depozytowej</td></tr>
+            <tr><td>Przychod z pozyczek</td><td>Roczna suma przychodow z marzy pozyczkowej</td></tr>
+            <tr><td><strong>Przychody razem</strong></td><td>Suma dwoch powyzszych</td></tr>
+            <tr><td>Wynagrodzenia</td><td>Roczna suma wynagrodzen (z inflacja)</td></tr>
+            <tr><td>Czynsz</td><td>Roczna suma czynszu (z inflacja)</td></tr>
+            <tr><td>Pozostale koszty</td><td>Roczna suma pozostalych kosztow (z inflacja)</td></tr>
+            <tr><td><strong>Koszty operacyjne razem</strong></td><td>Suma trzech powyzszych</td></tr>
+            <tr><td>CAPEX</td><td>Wydatki inwestycyjne (wystepuja tylko w Roku 1)</td></tr>
+            <tr><td><strong>Wydatki razem</strong></td><td>Koszty operacyjne + CAPEX</td></tr>
+            <tr><td><strong>Wynik roczny</strong></td><td>Przychody razem &minus; Wydatki razem (w danym roku)</td></tr>
+            <tr><td><strong>Wynik narastajaco</strong></td><td>Skumulowany wynik od poczatku dzialalnosci</td></tr>
+          </tbody>
+        </table>
+        <p>Wartosci ujemne sa wyswietlane w nawiasach i na czerwono, dodatnie — na zielono.</p>
+
+        <h3>5.3. Wykres</h3>
+        <p>Wykres liniowy przedstawia 3 serie danych na przestrzeni 72 miesiecy:</p>
+        <ul>
+          <li><strong>Wynik narastajaco</strong> (niebieska linia z wypelnieniem) — kluczowa krzywa pokazujaca, kiedy inwestycja sie zwraca</li>
+          <li><strong>Przychody narastajaco</strong> (zielona linia przerywana)</li>
+          <li><strong>Wydatki narastajaco</strong> (czerwona linia przerywana)</li>
+        </ul>
+        <p>Punkt, w ktorym niebieska linia przecina zero, odpowiada miesiocowi <strong>payback</strong>.</p>
+      </div>
+
+      <h2>6. Zarzadzanie scenariuszami</h2>
+      <div class="doc-card">
+        <p>Aplikacja umozliwia zapisywanie i wczytywanie zestawow parametrow wejsciowych jako <strong>scenariuszy</strong>:</p>
+        <ul>
+          <li><strong>Zapisz</strong> — wpisz nazwe scenariusza i kliknij "Zapisz". Jesli scenariusz o tej nazwie juz istnieje, zostanie zaktualizowany.</li>
+          <li><strong>Wczytaj</strong> — wybierz scenariusz z listy rozwijanej. Parametry zostana automatycznie zaladowane i przeliczone.</li>
+          <li><strong>Usun</strong> — wybierz scenariusz z listy i kliknij "Usun".</li>
+          <li><strong>Domyslne</strong> — przywraca wszystkie parametry do wartosci domyslnych (jak w oryginalnym pliku Excel).</li>
+        </ul>
+        <div class="info-box orange">
+          <strong>Uwaga</strong>
+          Scenariusze sa przechowywane w bazie danych na serwerze. Na darmowym planie hostingowym (Railway Trial) dane moga zostac utracone po ponownym wdrozeniu aplikacji.
+        </div>
+      </div>
+
+      <h2>7. Przykladowe zastosowania</h2>
+      <div class="doc-card">
+        <h3>Scenariusz 1: Analiza lokalizacji</h3>
+        <p>Porownanie oddzialu w centrum miasta (wyzszy czynsz, wiecej klientow) vs na przedmiesciach (nizszy czynsz, mniej klientow). Zmien parametry: czynsz, nowi klienci/miesiac, CAPEX.</p>
+
+        <h3>Scenariusz 2: Wrazliwosc na marze</h3>
+        <p>Sprawdzenie, jak zmiana marzy depozytowej o +/- 1 p.p. wplywa na payback. Zapisz trzy scenariusze: "Marza bazowa", "Marza +1pp", "Marza -1pp".</p>
+
+        <h3>Scenariusz 3: Pesymistyczny vs optymistyczny</h3>
+        <p>Scenariusz pesymistyczny: wyzsza atrycja (12%), mniej klientow (150), wyzsza inflacja (4%). Scenariusz optymistyczny: nizsza atrycja (5%), wiecej klientow (250), nizsza inflacja (2%).</p>
+      </div>
+
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SEKCJA TECHNICZNA -->
+    <!-- ================================================================== -->
+    <div id="technical" class="section">
+
+      <h2>1. Architektura systemu</h2>
+      <div class="doc-card">
+        <div class="arch-diagram">
+          <div class="arch-box">
+            <div class="title">Frontend (SPA)</div>
+            <div class="desc">HTML + CSS + JS<br>Chart.js<br>index.html</div>
+          </div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box">
+            <div class="title">Backend (API)</div>
+            <div class="desc">Node.js + Express.js<br>REST API<br>server.js</div>
+          </div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box">
+            <div class="title">Silnik kalkulacji</div>
+            <div class="desc">JavaScript<br>72-mies. projekcja<br>engine.js</div>
+          </div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box">
+            <div class="title">Baza danych</div>
+            <div class="desc">SQLite<br>better-sqlite3<br>scenarios.db</div>
+          </div>
+        </div>
+
+        <h3>Stos technologiczny</h3>
+        <table class="doc-table">
+          <thead><tr><th>Warstwa</th><th>Technologia</th><th>Wersja</th></tr></thead>
+          <tbody>
+            <tr><td>Runtime</td><td>Node.js</td><td>v24.x</td></tr>
+            <tr><td>Framework HTTP</td><td>Express.js</td><td>5.x</td></tr>
+            <tr><td>Baza danych</td><td>SQLite via better-sqlite3</td><td>12.x</td></tr>
+            <tr><td>Wykresy</td><td>Chart.js (CDN)</td><td>najnowsza</td></tr>
+            <tr><td>Hosting</td><td>Railway</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>2. Struktura plikow</h2>
+      <div class="doc-card">
+<pre>financial-app/
+  server.js          — Serwer Express + REST API + SQLite
+  engine.js          — Silnik kalkulacji (logika modelu finansowego)
+  package.json       — Zaleznosci i konfiguracja projektu
+  public/
+    index.html       — Frontend SPA (UI + logika kliencka)
+    docs.html        — Dokumentacja (ta strona)
+  scenarios.db       — Baza danych SQLite (tworzona automatycznie)
+  .gitignore         — Pliki wykluczone z repozytorium</pre>
+      </div>
+
+      <h2>3. REST API</h2>
+      <div class="doc-card">
+        <table class="doc-table">
+          <thead><tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Body / Parametry</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/defaults</code></td>
+              <td>Pobiera domyslne parametry wejsciowe</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td><code>/api/calculate</code></td>
+              <td>Uruchamia kalkulacje i zwraca wyniki</td>
+              <td>JSON z parametrami wejsciowymi</td>
+            </tr>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/scenarios</code></td>
+              <td>Lista wszystkich zapisanych scenariuszy</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/scenarios/:id</code></td>
+              <td>Pobiera szczegoly scenariusza (z parametrami)</td>
+              <td><code>:id</code> — ID scenariusza</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td><code>/api/scenarios</code></td>
+              <td>Zapisuje lub aktualizuje scenariusz</td>
+              <td><code>{ "name": "...", "params": {...} }</code></td>
+            </tr>
+            <tr>
+              <td><code>DELETE</code></td>
+              <td><code>/api/scenarios/:id</code></td>
+              <td>Usuwa scenariusz</td>
+              <td><code>:id</code> — ID scenariusza</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Przyklad: Wywolanie kalkulacji</h3>
+<pre>POST /api/calculate
+Content-Type: application/json
+
+{
+  "newDepositClientsPerMonth": 200,
+  "avgDepositPerClient": 15000,
+  "depositMarginPA": 0.04,
+  "avgLoanAmount": 25000,
+  "loanMarginPA": 0.06,
+  "capex": 2500000,
+  "salariesPerMonth": 100000,
+  "rentPerMonth": 50000,
+  "otherCostsPerMonth": 10000,
+  "annualInflation": 0.025,
+  "attritionRates": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08],
+  "amortization": [1, 0.95, 0.9, ...],
+  "penetration": [0.0025, 0.0025, ...]
+}</pre>
+
+        <h3>Przyklad odpowiedzi (uproszczona)</h3>
+<pre>{
+  "breakEvenMonth": 17,
+  "paybackMonth": 44,
+  "annualSummary": [
+    {
+      "year": 1,
+      "depositRevenue": 772065,
+      "loanRevenue": 19511,
+      "totalRevenue": 791576,
+      "totalOpCosts": 1932364,
+      "capex": 2500000,
+      "yearResult": -3640788,
+      "cumulativeResult": -3640788
+    },
+    ...
+  ],
+  "totals": { ... },
+  "chartData": [ { "month": 1, "cumulativeResult": -2660543, ... }, ... ],
+  "projection": [ ... ]
+}</pre>
+      </div>
+
+      <h2>4. Baza danych</h2>
+      <div class="doc-card">
+        <h3>Schemat tabeli <code>scenarios</code></h3>
+        <table class="doc-table">
+          <thead><tr><th>Kolumna</th><th>Typ</th><th>Ograniczenia</th><th>Opis</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>INTEGER</td><td>PRIMARY KEY, AUTOINCREMENT</td><td>Identyfikator scenariusza</td></tr>
+            <tr><td><code>name</code></td><td>TEXT</td><td>NOT NULL, UNIQUE</td><td>Nazwa scenariusza nadana przez uzytkownika</td></tr>
+            <tr><td><code>params</code></td><td>TEXT</td><td>NOT NULL</td><td>Parametry wejsciowe w formacie JSON</td></tr>
+            <tr><td><code>created_at</code></td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Data utworzenia</td></tr>
+            <tr><td><code>updated_at</code></td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Data ostatniej aktualizacji</td></tr>
+          </tbody>
+        </table>
+
+        <div class="info-box blue">
+          <strong>SQLite + WAL</strong>
+          Baza danych uzywa trybu WAL (Write-Ahead Logging) dla lepszej wydajnosci przy rownoczesnych odczytach i zapisach. Plik bazy <code>scenarios.db</code> jest tworzony automatycznie przy pierwszym uruchomieniu serwera.
+        </div>
+
+        <h3>Persistent Volume (Railway)</h3>
+        <p>Serwer sprawdza zmienna srodowiskowa <code>RAILWAY_VOLUME_MOUNT_PATH</code>. Jesli jest ustawiona, baza danych jest tworzona w tym katalogu (trwale przechowywanie). W przeciwnym razie baza jest tworzona w katalogu aplikacji (dane moga zostac utracone przy redeploy).</p>
+      </div>
+
+      <h2>5. Silnik kalkulacji — szczegoly techniczne</h2>
+      <div class="doc-card">
+        <p>Plik <code>engine.js</code> eksportuje dwie funkcje:</p>
+        <ul>
+          <li><code>getDefaultParams()</code> — zwraca obiekt z domyslnymi parametrami</li>
+          <li><code>calculate(params)</code> — glowna funkcja obliczeniowa</li>
+        </ul>
+
+        <h3>5.1. Indeks inflacji</h3>
+        <div class="formula">
+          inflationIndex[m] = (1 + annualInflation)<sup>m/12</sup>
+        </div>
+        <p>Ciagla inflacja miesieczna — dla miesiaca 12 daje dokladnie (1 + annualInflation).</p>
+
+        <h3>5.2. Kohorty klientow depozytowych</h3>
+        <p>Dla kazdej kohorty <code>c</code> (startuje w miesiacu <code>c</code>) i miesiaca <code>m</code>:</p>
+        <div class="formula">
+          clients(c, m) = newClients &times; &prod;<sub>yr=0..5</sub> (1 &minus; attritionRate[yr])<sup>exposure(yr)</sup>
+        </div>
+        <p>gdzie <code>exposure(yr) = max(0, min(elapsed - yr*12, 12)) / 12</code>, a <code>elapsed = m - c</code>.</p>
+        <p>Atrycja jest stosowana proporcjonalnie — jesli kohorta jest w 6. miesiacu 1. roku, zastosowane jest 50% rocznej atrycji.</p>
+
+        <h3>5.3. Nowe pozyczki (penetracja)</h3>
+        <div class="formula">
+          newLoansCount[m] = &sum;<sub>c=0..m</sub> clients(c, m) &times; penetration[m &minus; c]
+        </div>
+        <p>Kazda kohorta moze generowac nowe pozyczki zgodnie z krzywa penetracji, gdzie argument to wiek kohorty.</p>
+
+        <h3>5.4. Portfel pozyczkowy (amortyzacja)</h3>
+        <div class="formula">
+          portfolioBalance[m] = &sum;<sub>o=0..m</sub> newLoansCount[o] &times; avgLoan &times; inflationIndex[o] &times; amortization[m &minus; o]
+        </div>
+        <p>Kazda transza pozyczek spada w czasie zgodnie z krzywa amortyzacji. Saldo calego portfela to suma aktywnych tranz.</p>
+
+        <h3>5.5. Projekcja miesieczna</h3>
+        <table class="doc-table">
+          <thead><tr><th>Pozycja</th><th>Wzor</th></tr></thead>
+          <tbody>
+            <tr><td>Przychod z depozytow</td><td><code>cohortClients[m] * avgDeposit * inflationIndex[m] * depositMargin / 12</code></td></tr>
+            <tr><td>Przychod z pozyczek</td><td><code>portfolioBalance[m] * loanMargin / 12</code></td></tr>
+            <tr><td>Koszty operacyjne</td><td><code>(salaries + rent + other) * inflationIndex[m]</code></td></tr>
+            <tr><td>CAPEX</td><td>Tylko w miesiacu 1</td></tr>
+            <tr><td>Wynik operacyjny</td><td><code>totalRevenue - totalOpCosts</code></td></tr>
+            <tr><td>Wynik narastajaco</td><td><code>cumulativeRevenue - cumulativeExpenses</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>5.6. Zlozonosc obliczeniowa</h3>
+        <div class="info-box blue">
+          <strong>Wydajnosc</strong>
+          Silnik kalkulacji dziala w zlozonosci O(n<sup>2</sup>) gdzie n = 72 (liczba miesiecy). Dla kohort i portfela wymaga podwojnej petli (72 &times; 72 = ok. 5000 iteracji). Obliczenie pelnego scenariusza trwa ponizej 10 ms.
+        </div>
+      </div>
+
+      <h2>6. Frontend</h2>
+      <div class="doc-card">
+        <p>Frontend to aplikacja <strong>SPA</strong> (Single Page Application) w jednym pliku <code>public/index.html</code>. Nie uzywa frameworkow (React/Vue) — czysty JavaScript.</p>
+
+        <h3>Kluczowe elementy UI</h3>
+        <table class="doc-table">
+          <thead><tr><th>Element</th><th>Opis</th></tr></thead>
+          <tbody>
+            <tr><td>Panel parametrow (lewy)</td><td>Wszystkie edytowalne pola wejsciowe z zoltym tlem, sekcje zwijane dla amortyzacji i penetracji</td></tr>
+            <tr><td>Panel wynikow (prawy)</td><td>KPI, tabela roczna, wykres — generowane dynamicznie po kalkulacji</td></tr>
+            <tr><td>Pasek scenariuszy (gora)</td><td>Zapisz/wczytaj/usun scenariusze, reset do domyslnych</td></tr>
+            <tr><td>Powiadomienia (toast)</td><td>Informacje o zapisie/wczytaniu/bledach — wyswietlane w prawym gornym rogu</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Biblioteki zewnetrzne</h3>
+        <ul>
+          <li><strong>Chart.js</strong> (CDN) — renderowanie wykresu liniowego z trzema seriami danych</li>
+        </ul>
+
+        <h3>Formatowanie</h3>
+        <ul>
+          <li>Wartosci procentowe sa wyswietlane w formularzu jako %, ale przesylane do API jako ulamki dziesietne (np. 4.0% &rarr; 0.04)</li>
+          <li>Kwoty PLN formatowane z separatorami tysiecy (spacja), wartosci ujemne w nawiasach</li>
+        </ul>
+      </div>
+
+      <h2>7. Uruchomienie lokalne</h2>
+      <div class="doc-card">
+        <h3>Wymagania</h3>
+        <ul>
+          <li>Node.js v18+ (zalecane v24.x)</li>
+          <li>npm (dostarczany z Node.js)</li>
+        </ul>
+
+        <h3>Instalacja i uruchomienie</h3>
+<pre>cd financial-app
+npm install
+npm start</pre>
+        <p>Serwer uruchomi sie na <code>http://localhost:3000</code>.</p>
+
+        <h3>Zmienne srodowiskowe</h3>
+        <table class="doc-table">
+          <thead><tr><th>Zmienna</th><th>Domyslna</th><th>Opis</th></tr></thead>
+          <tbody>
+            <tr><td><code>PORT</code></td><td><code>3000</code></td><td>Port serwera HTTP</td></tr>
+            <tr><td><code>RAILWAY_VOLUME_MOUNT_PATH</code></td><td>(katalog aplikacji)</td><td>Sciezka do trwalego volumenu na Railway</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>8. Deployment (Railway)</h2>
+      <div class="doc-card">
+        <h3>Konfiguracja</h3>
+        <ul>
+          <li>Repozytorium: <code>github.com/maciekpokora-mp/financial-app</code></li>
+          <li>Build command: automatyczny (<code>npm install</code>)</li>
+          <li>Start command: <code>npm start</code> (= <code>node server.js</code>)</li>
+          <li>Serwer nasluchuje na <code>0.0.0.0:PORT</code> (PORT ustawiany przez Railway)</li>
+        </ul>
+
+        <h3>Auto-deploy</h3>
+        <p>Kazdy push na branch <code>main</code> automatycznie wyzwala nowe wdrozenie na Railway.</p>
+
+        <div class="info-box green">
+          <strong>Aktualizacja aplikacji</strong>
+          Aby wdrozyc zmiany: edytuj pliki lokalnie, nastepnie wykonaj <code>git add</code>, <code>git commit</code>, <code>git push</code>. Railway automatycznie zbuduje i wdrozy nowa wersje.
+        </div>
+      </div>
+
+      <h2>9. Mozliwe rozszerzenia</h2>
+      <div class="doc-card">
+        <ul>
+          <li><strong>Eksport do Excel/PDF</strong> — generowanie raportow z wynikami kalkulacji</li>
+          <li><strong>Porownanie scenariuszy</strong> — wyswietlanie dwoch scenariuszy obok siebie z podswietleniem roznic</li>
+          <li><strong>Autentykacja</strong> — logowanie uzytkownikow, prywatne scenariusze</li>
+          <li><strong>PostgreSQL</strong> — migracja z SQLite na PostgreSQL dla lepszej skalowalnosci</li>
+          <li><strong>Analiza wrazliwosci</strong> — automatyczne generowanie macierzy break-even/payback dla roznych kombinacji parametrow</li>
+          <li><strong>Wersjonowanie scenariuszy</strong> — historia zmian z mozliwoscia cofania</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.doc-nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
